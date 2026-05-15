@@ -101,9 +101,9 @@ object Main {
 
   @tailrec
   def humanTurn(board: Board, open: List[Coord2D], player: Stone, movedFrom: Option[Coord2D],config: GameConfig): (Board, List[Coord2D]) = {
-    
+
     showValidMoves(board, player, open)
-    
+
     movedFrom match {
       case Some(locked) => {
         println(T4.renderBoard(board, config.rows, config.cols))
@@ -180,108 +180,122 @@ object Main {
     }
   }
 
-  def computerTurn(board: Board, open: List[Coord2D], rand: MyRandom): (Board, List[Coord2D], MyRandom) = {
-    val (newBoardOpt, newRand, newOpen, movedTo) = playRandomly(board, rand, Stone.Black, open, randomMove)
-    newBoardOpt match {
-      case None     => (board, open, newRand)
-      case Some(nb) => {
-        println(s"  Black moveu para $movedTo.")
-        (nb, newOpen, newRand)
+  def computerTurn(board: Board, open: List[Coord2D], rand: MyRandom, config: GameConfig): (Board, List[Coord2D], MyRandom) = {
+    if (config.difficulty == 1) {
+      val (newBoardOpt, newRand, newOpen, movedTo) = playRandomly(board, rand, Stone.Black, open, randomMove)
+
+      newBoardOpt match {
+        case None => (board, open, newRand)
+        case Some(nb) => {
+          println(s"  Black moveu para $movedTo.")
+          (nb, newOpen, newRand)
+        }
+      }
+    }else{
+      println("Níveis de dificuldade ainda não implementados. A jogar modo aleatório")
+      val (newBoardOpt, newRand, newOpen, movedTo) = playRandomly(board, rand, Stone.Black, open, randomMove)
+
+      newBoardOpt match {
+        case None => (board, open, newRand)
+        case Some(nb) => {
+          println(s"  Black moveu para $movedTo.")
+          (nb, newOpen, newRand)
+        }
       }
     }
   }
 
 
-  type GameState = (Board, List[Coord2D], Stone)
-  @tailrec
-  def gameLoop(board: Board, open: List[Coord2D], player: Stone, rand: MyRandom, history: List[GameState], config: GameConfig): Unit = {
+    type GameState = (Board, List[Coord2D], Stone)
 
-    // O TIMER RECOMEÇA AQUI (Sempre que a função é chamada, seja turno novo ou Undo)
-    val startTime = System.currentTimeMillis()
+    @tailrec
+    def gameLoop(board: Board, open: List[Coord2D], player: Stone, rand: MyRandom, history: List[GameState], config: GameConfig): Unit = {
 
-    println(s"\n==============================")
-    println(s"  Turno do $player")
-    println(s"  Tempo Limite: ${config.timeLimitMillis / 1000}s")
-    println(s"==============================")
-    println(renderBoard(board, config.rows, config.cols))
+      // O TIMER RECOMEÇA AQUI (Sempre que a função é chamada, seja turno novo ou Undo)
+      val startTime = System.currentTimeMillis()
 
-    // 1. Verificar se já existe um vencedor (T5)
-    T5.checkWinner(board, player, open) match {
-      case Some(vencedor) =>
-        println(s"\n*** JOGO TERMINADO! Vencedor: $vencedor ***\n")
+      println(s"\n==============================")
+      println(s"  Turno do $player")
+      println(s"  Tempo Limite: ${config.timeLimitMillis / 1000}s")
+      println(s"==============================")
+      println(renderBoard(board, config.rows, config.cols))
 
-      case None =>
-        println(s"Introduza coordenadas (origem destino, ex: '2 0 2 2') ou 'undo':")
-        val input = StdIn.readLine().trim.toLowerCase
+      // 1. Verificar se já existe um vencedor (T5)
+      T5.checkWinner(board, player, open) match {
+        case Some(vencedor) =>
+          println(s"\n*** JOGO TERMINADO! Vencedor: $vencedor ***\n")
 
-        // --- LÓGICA DE UNDO ---
-        if (input == "undo") {
-          history match {
-            case Nil =>
-              println("-> Não há jogadas para desfazer!")
-              gameLoop(board, open, player, rand, Nil, config) // Recomeça o turno e o timer
+        case None =>
+          println(s"Introduza coordenadas (origem destino, ex: '2 0 2 2') ou 'undo':")
+          val input = StdIn.readLine().trim.toLowerCase
 
-            case (oldBoard, oldOpen, oldPlayer) :: rest =>
-              println("-> Undo realizado! Voltando ao estado anterior...")
-              gameLoop(oldBoard, oldOpen, oldPlayer, rand, rest, config) // Recomeça no estado antigo
+          // --- LÓGICA DE UNDO ---
+          if (input == "undo") {
+            history match {
+              case Nil =>
+                println("-> Não há jogadas para desfazer!")
+                gameLoop(board, open, player, rand, Nil, config) // Recomeça o turno e o timer
+
+              case (oldBoard, oldOpen, oldPlayer) :: rest =>
+                println("-> Undo realizado! Voltando ao estado anterior...")
+                gameLoop(oldBoard, oldOpen, oldPlayer, rand, rest, config) // Recomeça no estado antigo
+            }
           }
-        }
-        // --- LÓGICA DE JOGADA ---
-        else {
-          // Registar o tempo assim que o input é recebido
-          val timeExpired = T6.isTimeOver(startTime,config.timeLimitMillis)
+          // --- LÓGICA DE JOGADA ---
+          else {
+            // Registar o tempo assim que o input é recebido
+            val timeExpired = T6.isTimeOver(startTime, config.timeLimitMillis)
 
-          if (timeExpired) {
-            println("\n[!] TEMPO LIMITE ULTRAPASSADO!")
+            if (timeExpired) {
+              println("\n[!] TEMPO LIMITE ULTRAPASSADO!")
 
-            // ============================================================
-            // ESCOLHE UMA DAS OPÇÕES ABAIXO (Comenta/Descomenta):
 
-            // OPÇÃO A: O JOGADOR PERDE O TURNO (Passa para o adversário)
-            println("-> Perdeste o teu turno.")
-            gameLoop(board, open, player.opponent, rand, history, config)
 
-            /* // OPÇÃO B: O JOGADOR PERDE O JOGO IMEDIATAMENTE
+              // OPÇÃO A: O JOGADOR PERDE O TURNO (Passa para o adversário)
+              println("-> Perdeste o teu turno.")
+              gameLoop(board, open, player.opponent, rand, history, config)
+
+              /* // OPÇÃO B: O JOGADOR PERDE O JOGO IMEDIATAMENTE
                println(s"-> O jogador $player foi desqualificado por tempo!")
                println(s"*** VENCEDOR: ${player.opponent} ***")
                // Fim da recursão
             */
-            // ============================================================
-          }
-          else {
-            // Processar a jogada
-            // 2. GUARDAR O HISTÓRICO: Guardamos o estado de agora antes de ele ser modificado
-            val currentHistory = (board, open, player) :: history
 
-            // 3. USAR AS TUAS FUNÇÕES ORIGINAIS
-            player match {
-              case Stone.White =>
-                // A tua função humanTurn faz o trabalho todo!
-                val (nb, newOpen) = humanTurn(board, open, Stone.White, None,config)
-                // Passamos o currentHistory para a próxima iteração
-                gameLoop(nb, newOpen, Stone.Black, rand, currentHistory,config)
+            }
+            else {
+              // Processar a jogada
+              // 2. GUARDAR O HISTÓRICO: Guardamos o estado de agora antes de ele ser modificado
+              val currentHistory = (board, open, player) :: history
 
-              case Stone.Black =>
-                // A tua função computerTurn faz o trabalho todo!
-                val (nb, newOpen, newRand) = computerTurn(board, open, rand)
-                // Passamos o currentHistory para a próxima iteração
-                gameLoop(nb, newOpen, Stone.White, newRand, currentHistory,config)
+              // 3. USAR AS TUAS FUNÇÕES ORIGINAIS
+              player match {
+                case Stone.White =>
+                  // A tua função humanTurn faz o trabalho
+                  val (nb, newOpen) = humanTurn(board, open, Stone.White, None, config)
+                  // Passamos o currentHistory para a próxima iteração
+                  gameLoop(nb, newOpen, Stone.Black, rand, currentHistory, config)
+
+                case Stone.Black =>
+                  // A tua função computerTurn faz o trabalho
+                  val (nb, newOpen, newRand) = computerTurn(board, open, rand, config)
+                  // Passamos o currentHistory para a próxima iteração
+                  gameLoop(nb, newOpen, Stone.White, newRand, currentHistory, config)
+              }
             }
           }
-        }
+      }
     }
-  }
 
-  case class GameConfig(
-                         rows: Int = 6,
-                         cols: Int = 6,
-                         timeLimitMillis: Int = 10000,
-                         difficulty: Int = 1 //  1 = Fácil (Random), 2 = Difícil
-                       )
+    case class GameConfig(
+                           rows: Int = 6,
+                           cols: Int = 6,
+                           timeLimitMillis: Int = 10000,
+                           difficulty: Int = 1 //  1 = Fácil (Random), 2 = Difícil
+                         )
 
-  @main def run(): Unit = {
+    @main def run(): Unit = {
       println("Bem-vindo ao Kōnane!")
       val defaultConfig = GameConfig() // Usa os valores por defeito (6x6, 10s, nível 1)
       mainMenu(defaultConfig)
     }
-}
+  }
