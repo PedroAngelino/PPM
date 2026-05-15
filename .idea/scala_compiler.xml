@@ -2,6 +2,6 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <option name="separateProdTestSources" value="true" />
-    <profile name="sbt 1" modules="ProjetoPPM,ProjetoPPM.main,ProjetoPPM.test" />
+    <profile name="sbt 1" modules="ProjetoKonane,ProjetoKonane.main,ProjetoKonane.test,ProjetoPPM,ProjetoPPM.main,ProjetoPPM.test,projetoppm,projetoppm.main,projetoppm.test" />
   </component>
 </project>
