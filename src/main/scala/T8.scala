@@ -1,198 +1,203 @@
-import javafx.application.Application
-import javafx.scene.Scene
-import javafx.scene.layout.{BorderPane, GridPane, StackPane, HBox}
-import javafx.scene.shape.{Circle, Rectangle}
-import javafx.scene.paint.Color
-import javafx.scene.control.{Button, Label}
-import javafx.stage.Stage
+import javafx.application.{Application, Platform}
 import javafx.geometry.{Insets, Pos}
-
+import javafx.scene.Scene
+import javafx.scene.control.*
+import javafx.scene.layout.*
+import javafx.scene.paint.Color
+import javafx.scene.shape.{Circle, Rectangle}
+import javafx.scene.text.{Font, FontWeight}
+import javafx.stage.Stage
 import T1.*
 import T2.*
-import T2.given
 
-class KonaneGUI extends Application {
+// T8 é apenas uma vista (View) do estado em GameState.
+// Não contém lógica de jogo — apenas desenha e delega cliques ao Main via callbacks.
+object T8:
+  // Callbacks injetados pelo Main — a GUI chama estes quando o utilizador interage
+  var onHumanMove: (Coord2D, Coord2D) => Unit = (_, _) => ()
+  var onEndTurn: () => Unit                   = () => ()
+  var onSkipTurn: () => Unit                  = () => ()
+  var onUndo: () => Unit                      = () => ()
+  var onRestart: () => Unit                   = () => ()
 
-  // ==========================================
-  // 1. ESTADO DA GUI (Variáveis Mutáveis)
-  // ==========================================
-  val Rows = 6
-  val Cols = 6
+  // Referencia à instancia da app JavaFX, guardada quando start() é chamado
+  var instance: KonaneApp = _
 
-  var board: Board = T2.setupBoard(T2.initBoard(Rows, Cols), Rows, Cols)
-  var open: List[Coord2D] = board.keys.toList.take(2) // Ajusta para a tua initialOpenCoords
-  var player: Stone = Stone.Black
-  var selectedPiece: Option[Coord2D] = None
+  def launch(): Unit =
+    val t = new Thread(() => Application.launch(classOf[KonaneApp]))
+    t.setDaemon(true)
+    t.start()
 
-  // Elementos visuais
-  val grid = new GridPane()
-  val statusLabel = new Label("Turno das Pretas (Início do Jogo)")
+class KonaneApp extends Application:
 
-  // ==========================================
-  // 2. INÍCIO DA JANELA
-  // ==========================================
-  override def start(primaryStage: Stage): Unit = {
+  private var primaryStage: Stage  = _
+  private var gridPane: GridPane   = _
+  private var statusLabel: Label   = _
+  private var endTurnBtn: Button   = _
+
+  // Estado local de selecao — unico estado proprio da GUI
+  private var selectedCoord: Option[Coord2D] = None
+  private var validDests: List[Coord2D]      = Nil
+  private var canEndTurn: Boolean            = false
+
+  private val CELL = 70
+
+  override def start(stage: Stage): Unit =
+    T8.instance = this
+    primaryStage = stage
+    stage.setTitle("Konane - GUI")
+    stage.setResizable(false)
+    buildGameScreen()
+    // Registar o callback: sempre que o Main muda o estado, a GUI re-desenha
+    GameState.onStateChanged = () => Platform.runLater(() => refresh())
+
+  // ===================================================
+  // CONSTRUCAO DO ECRA (feito uma vez)
+  // ===================================================
+  private def buildGameScreen(): Unit =
     val root = new BorderPane()
-    grid.setAlignment(Pos.CENTER)
+    root.setStyle("-fx-background-color: white;")
 
-    // Barra de Ferramentas (Opções da TUI)
-    val toolBar = new HBox(10)
-    toolBar.setPadding(new Insets(10))
-    toolBar.setAlignment(Pos.CENTER)
+    // Barra de topo
+    val topBar = new HBox(20)
+    topBar.setPadding(new Insets(10, 15, 10, 15))
+    topBar.setStyle("-fx-background-color: black;")
+    topBar.setAlignment(Pos.CENTER_LEFT)
+    val titleLbl = new Label("KONANE")
+    titleLbl.setFont(Font.font("Georgia", FontWeight.BOLD, 18))
+    titleLbl.setTextFill(Color.WHITE)
+    statusLabel = new Label("A aguardar inicio...")
+    statusLabel.setTextFill(Color.LIGHTGRAY)
+    topBar.getChildren.addAll(titleLbl, statusLabel)
+    root.setTop(topBar)
 
-    val btnRestart = new Button("Reiniciar")
-    btnRestart.setOnAction(_ => restartGame())
+    // Tabuleiro
+    gridPane = new GridPane()
+    gridPane.setPadding(new Insets(20))
+    gridPane.setHgap(2); gridPane.setVgap(2)
+    gridPane.setAlignment(Pos.CENTER)
+    root.setCenter(gridPane)
 
-    val btnStopCapture = new Button("Parar de Capturar (Passar Turno)")
-    btnStopCapture.setOnAction(_ => passTurn())
+    // Barra de botoes
+    endTurnBtn = btn("Terminar Turno")
+    endTurnBtn.setVisible(false)
+    endTurnBtn.setOnAction(_ => { canEndTurn = false; selectedCoord = None; validDests = Nil; endTurnBtn.setVisible(false); T8.onEndTurn() })
 
-    toolBar.getChildren.addAll(btnRestart, btnStopCapture, statusLabel)
+    val skipBtn = btn("Pular Jogada")
+    skipBtn.setOnAction(_ => { selectedCoord = None; validDests = Nil; canEndTurn = false; endTurnBtn.setVisible(false); T8.onSkipTurn() })
 
-    root.setTop(toolBar)
-    root.setCenter(grid)
+    val undoBtn = btn("Undo")
+    undoBtn.setOnAction(_ => { selectedCoord = None; validDests = Nil; canEndTurn = false; endTurnBtn.setVisible(false); T8.onUndo() })
 
-    drawBoard() // Desenha o tabuleiro pela primeira vez
+    val restartBtn = btn("Reiniciar")
+    restartBtn.setOnAction(_ => { selectedCoord = None; validDests = Nil; canEndTurn = false; endTurnBtn.setVisible(false); T8.onRestart() })
 
-    primaryStage.setTitle("Kōnane - T8")
-    primaryStage.setScene(new Scene(root, 600, 650))
+    val bottomBar = new HBox(12, endTurnBtn, skipBtn, undoBtn, restartBtn)
+    bottomBar.setPadding(new Insets(12))
+    bottomBar.setAlignment(Pos.CENTER)
+    bottomBar.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-width: 1 0 0 0;")
+    root.setBottom(bottomBar)
+
+    val cols = GameState.cfgCols; val rows = GameState.cfgRows
+    primaryStage.setScene(new Scene(root, (cols * (CELL + 2) + 80).toDouble, (rows * (CELL + 2) + 130).toDouble))
     primaryStage.show()
-  }
 
-  // ==========================================
-  // 3. DESENHAR O TABULEIRO (View)
-  // ==========================================
-  def drawBoard(): Unit = {
-    grid.getChildren.clear() // Limpa o desenho anterior
+  // ===================================================
+  // REFRESH — chamado pelo Main via GameState.onStateChanged
+  // ===================================================
+  private def refresh(): Unit =
+    renderBoard()
+    statusLabel.setText(
+      if !GameState.gameActive then "Jogo terminado."
+      else if GameState.currentPlayer == Stone.White then "O seu turno (GUI)"
+      else "Turno das Pretas (PC)..."
+    )
 
-    // Descobre quais são os destinos válidos se houver uma peça selecionada
-    val validMoves = selectedPiece match {
-      case Some(orig) => validDestinations(board, player, orig, open)
-      case None => List.empty
-    }
+  // ===================================================
+  // DESENHAR O TABULEIRO (so lê GameState, nao altera nada)
+  // ===================================================
+  private def renderBoard(): Unit =
+    gridPane.getChildren.clear()
+    val board = GameState.board
+    val open  = GameState.open
+    val rows  = GameState.cfgRows
+    val cols  = GameState.cfgCols
 
-    for (r <- 0 until Rows; c <- 0 until Cols) {
+    if board == null then return
+
+    for r <- 0 until rows; c <- 0 until cols do
       val coord = (r, c)
-      val cellPane = new StackPane()
+      val pane  = new StackPane()
+      pane.setPrefSize(CELL, CELL)
 
-      // 3.1. O Quadrado (Fundo da casa)
-      val square = new Rectangle(80, 80)
-      square.setStroke(Color.BLACK)
+      val baseColor = if (r + c) % 2 == 0 then Color.web("#e8e8e8") else Color.web("#c0c0c0")
+      val bgColor =
+        if selectedCoord.contains(coord) then Color.web("#4444ff", 0.5)
+        else if validDests.contains(coord) then Color.web("#ffff00", 0.7)
+        else baseColor
+      val bg = new Rectangle(CELL, CELL); bg.setFill(bgColor)
+      pane.getChildren.add(bg)
 
-      // Pintar a casa: Se for um destino válido, pinta de Verde (Dica visual!)
-      if (validMoves.contains(coord)) {
-        square.setFill(Color.LIGHTGREEN)
-      } else {
-        // Padrão de xadrez normal
-        square.setFill(if ((r + c) % 2 == 0) Color.BURLYWOOD else Color.SADDLEBROWN)
-      }
+      board.get(coord).foreach: stone =>
+        val circle = new Circle(CELL / 2.0 - 8)
+        circle.setFill(if stone == Stone.Black then Color.BLACK else Color.WHITE)
+        circle.setStroke(Color.BLACK); circle.setStrokeWidth(2)
+        pane.getChildren.add(circle)
 
-      cellPane.getChildren.add(square)
+      if !board.contains(coord) && open.contains(coord) then
+        pane.getChildren.add(new Circle(4, Color.web("#00aa00", 0.6)))
 
-      // 3.2. A Pedra (Círculo)
-      getStone(board)(coord) match {
-        case Some(Stone.Black) =>
-          val circle = new Circle(30, Color.BLACK)
-          // Se for a peça selecionada, dar um destaque visual (ex: borda amarela)
-          if (selectedPiece.contains(coord)) circle.setStroke(Color.YELLOW)
-          cellPane.getChildren.add(circle)
+      // Clicavel apenas se for turno das Brancas
+      if GameState.gameActive && GameState.currentPlayer == Stone.White then
+        val isWhite    = board.get(coord).contains(Stone.White)
+        val isDest     = validDests.contains(coord)
+        val clickable  = (isWhite && !canEndTurn) || isDest
+        if clickable then
+          pane.setStyle("-fx-cursor: hand;")
+          pane.setOnMouseClicked(_ => handleClick(coord))
 
-        case Some(Stone.White) =>
-          val circle = new Circle(30, Color.WHITE)
-          if (selectedPiece.contains(coord)) circle.setStroke(Color.YELLOW)
-          cellPane.getChildren.add(circle)
+      gridPane.add(pane, c, r)
 
-        case None => // Casa vazia, não desenha círculo
-      }
-
-      // 3.3. O Evento de Clique
-      cellPane.setOnMouseClicked(_ => handleCellClick(r, c))
-
-      // Adiciona a casa à grelha do JavaFX
-      grid.add(cellPane, c, r)
-    }
-  }
-
-  // ==========================================
-  // 4. LÓGICA DE INTERAÇÃO (Controller)
-  // ==========================================
-  def handleCellClick(r: Int, c: Int): Unit = {
-    val clickedCoord = (r, c)
-
-    selectedPiece match {
+  // ===================================================
+  // CLIQUE — selecao local, depois delega ao Main
+  // ===================================================
+  private def handleClick(coord: Coord2D): Unit =
+    if !GameState.gameActive || GameState.currentPlayer != Stone.White then return
+    selectedCoord match
       case None =>
-        // Cenário A: Não temos peça selecionada. O jogador clicou numa peça dele?
-        getStone(board)(clickedCoord) match {
-          case Some(s) if s == player =>
-            // Verifica se esta peça tem jogadas possíveis
-            if (validDestinations(board, player, clickedCoord, open).nonEmpty) {
-              selectedPiece = Some(clickedCoord) // Seleciona a peça!
-              drawBoard() // Redesenha para mostrar a borda amarela e as casas verdes
-            }
-          case _ => // Clicou num espaço vazio ou na peça do adversário, ignorar.
-        }
+        // Selecionar peca: calcula destinos validos localmente para highlight
+        val dests = T2.validDestinations(GameState.board, Stone.White, coord, GameState.open)
+        if GameState.board.get(coord).contains(Stone.White) && dests.nonEmpty then
+          selectedCoord = Some(coord); validDests = dests; renderBoard()
+        else
+          statusLabel.setText("Peca sem movimentos validos.")
 
-      case Some(orig) =>
-        // Cenário B: Já temos uma peça selecionada.
-        if (clickedCoord == orig) {
-          // O jogador clicou na mesma peça para a DESMARCAR
-          selectedPiece = None
-          drawBoard()
-        } else {
-          // O jogador clicou noutra casa. É um destino válido?
-          val destinos = validDestinations(board, player, orig, open)
-          if (destinos.contains(clickedCoord)) {
+      case Some(from) if validDests.contains(coord) =>
+        // Executar salto: delega ao Main, que altera GameState e notifica de volta
+        val prevSelected = from
+        selectedCoord = None; validDests = Nil
+        T8.onHumanMove(prevSelected, coord)
 
-            // É válido! Vamos usar as funções puras do T2 para calcular o novo estado
-            val (newBoardOpt, newOpen) = T2.play(board, player, orig, clickedCoord, open)
+      case _ =>
+        if !canEndTurn then
+          val dests = T2.validDestinations(GameState.board, Stone.White, coord, GameState.open)
+          if GameState.board.get(coord).contains(Stone.White) && dests.nonEmpty then
+            selectedCoord = Some(coord); validDests = dests; renderBoard()
 
-            newBoardOpt match {
-              case Some(nb) =>
-                // ATUALIZA O ESTADO IMPERATIVO!
-                board = nb
-                open = newOpen
+  // Chamado pelo Main apos um salto valido, para permitir multi-salto na GUI
+  def notifyJumpDone(to: Coord2D, moreDests: List[Coord2D]): Unit =
+    Platform.runLater: () =>
+      if moreDests.nonEmpty then
+        selectedCoord = Some(to); validDests = moreDests; canEndTurn = true
+        endTurnBtn.setVisible(true)
+        statusLabel.setText("Pode continuar ou terminar o turno.")
+        renderBoard()
+      else
+        selectedCoord = None; validDests = Nil; canEndTurn = false
+        endTurnBtn.setVisible(false)
 
-                // LÓGICA DE SALTO MÚLTIPLO:
-                // Se a peça no novo destino ainda puder saltar, mantemo-la selecionada!
-                if (validDestinations(board, player, clickedCoord, open).nonEmpty) {
-                  selectedPiece = Some(clickedCoord)
-                  statusLabel.setText(s"Podes continuar a saltar ou clicar 'Parar'.")
-                } else {
-                  // Se não puder saltar mais, passa o turno!
-                  passTurn()
-                }
-
-                drawBoard()
-              case None => // Erro de jogada (não devia acontecer porque filtramos os destinos antes)
-            }
-          }
-        }
-    }
-  }
-
-  // Função auxiliar para passar o turno
-  def passTurn(): Unit = {
-    selectedPiece = None
-    player = player.opponent
-    statusLabel.setText(s"Turno do jogador: $player")
-    drawBoard()
-
-    // Se for o turno das pretas, mandar o computador jogar
-    if (player == Stone.Black) {
-      // computerPlay() // Terias de implementar esta função na GUI
-    }
-  }
-
-  def restartGame(): Unit = {
-    board = T2.setupBoard(T2.initBoard(Rows, Cols), Rows, Cols)
-    open = board.keys.toList.take(2) // Ajusta isto
-    player = Stone.Black
-    selectedPiece = None
-    statusLabel.setText("Jogo Reiniciado. Turno das Pretas.")
-    drawBoard()
-  }
-}
-
-// O pontapé de saída da aplicação JavaFX
-@main def runGUI(): Unit = {
-  Application.launch(classOf[KonaneGUI])
-}
+  private def btn(text: String): Button =
+    val b = new Button(text)
+    b.setFont(Font.font("Arial", 12)); b.setPrefHeight(36)
+    b.setStyle("-fx-background-color: white; -fx-text-fill: black; -fx-border-color: black; -fx-border-width: 1; -fx-background-radius: 3; -fx-cursor: hand;")
+    b

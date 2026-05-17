@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/PPM1.ProjetoKonane.iml" filepath="$PROJECT_DIR$/.idea/modules/PPM1.ProjetoKonane.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/PPM1.ProjetoKonane.ProjetoKonane-build.iml" filepath="$PROJECT_DIR$/.idea/modules/PPM1.ProjetoKonane.ProjetoKonane-build.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ProjetoPPM/ProjetoKonane.iml" filepath="$PROJECT_DIR$/.idea/modules/ProjetoPPM/ProjetoKonane.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ProjetoPPM/ProjetoKonane.ProjetoKonane-build.iml" filepath="$PROJECT_DIR$/.idea/modules/ProjetoPPM/ProjetoKonane.ProjetoKonane-build.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ProjetoPPM/ProjetoKonane.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ProjetoPPM/ProjetoKonane.main.iml" />
