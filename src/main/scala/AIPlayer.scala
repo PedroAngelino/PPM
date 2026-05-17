@@ -1,10 +1,14 @@
-import T2.*
-import T2.given
-import T1.Coord2D
-import T1.Board
+import GameDomain.*
+import GameUtils.*
+import GameEngine.*
+import GameEngine.given 
 
-object T3 {
+object AIPlayer {
 
+  def randomMove(lstOpenCoords: List[Coord2D], rand: MyRandom): (Coord2D, MyRandom) =
+    val (index, newRand) = rand.nextInt(lstOpenCoords.length) //de uma lista de posições possiveis vai escolher uma aleatoriamente
+    (lstOpenCoords(index), newRand)
+    
   def playRandomly(
                     board: Board,
                     r: MyRandom,
@@ -37,7 +41,7 @@ object T3 {
       val (selectedFrom, r3) = f(possibleOrigins, r2)
 
       // Aplicar a jogada  com T2.play
-      val (newBoardOpt, newOpenCoords) = play(board, player, selectedFrom, selectedTo, lstOpenCoords)
+      val (newBoardOpt, newOpenCoords) = GameEngine.play(board, player, selectedFrom, selectedTo, lstOpenCoords)
 
       // Devolvemos o novo tabuleiro
       (newBoardOpt, r3, newOpenCoords, Some(selectedTo))

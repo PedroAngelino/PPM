@@ -1,6 +1,6 @@
 import scala.collection.parallel.CollectionConverters.*
-import T1.*
-import T2.*
+import GameDomain.*
+import GameUtils.*
 
 // Estado partilhado entre TUI (Main) e GUI (T8)
 // Ambos leem e escrevem neste objeto para se manterem sincronizados
