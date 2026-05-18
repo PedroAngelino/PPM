@@ -58,10 +58,12 @@ object GameEngine {
         case (dr, dc) :: t =>
           val dest = (from._1 + dr, from._2 + dc)
           val mid = ((from._1 + dest._1) / 2, (from._2 + dest._2) / 2)
-          val ok = exists(dest, open) && isOwned(board)(player.opponent)(mid)
+          val ok = exists(dest, open) && !board.contains(dest) && isOwned(board)(player.opponent)(mid)
           check(t, if ok then dest :: acc else acc)
 
-    check(List((-2, 0), (2, 0), (0, -2), (0, 2)), Nil)
+    board.get(from) match
+      case Some(s) if s == player => check(List((-2, 0), (2, 0), (0, -2), (0, 2)), Nil)
+      case _ => Nil
 
   def checkWinner(board: Board, currentPlayer: Stone, open: List[Coord2D]): Option[Stone] = {
 
@@ -79,7 +81,7 @@ object GameEngine {
   }
 
   def play(board: Board, player: Stone, from: Coord2D, to: Coord2D, open: List[Coord2D])
-          (using updater: (List[Coord2D], Coord2D, Coord2D) => List[Coord2D]): (Option[Board], List[Coord2D]) =
+          (using updater: (List[Coord2D], Coord2D, Coord2D, Coord2D) => List[Coord2D]): (Option[Board], List[Coord2D]) =
 
     @tailrec
     def exists(target: Coord2D, l: List[Coord2D]): Boolean = l match
@@ -88,11 +90,11 @@ object GameEngine {
       case _ :: t => exists(target, t)
 
     board.get(from) match
-      case Some(s) if s == player && exists(to, open) =>
+      case Some(s) if s == player && exists(to, open) && !board.contains(to) =>
         capturedCoord(from, to) match
           case Some(mid) if board.get(mid).contains(player.opponent) =>
             val nb = board - from - mid + (to -> player)
-            (Some(nb), updater(open, from, mid))
+            (Some(nb), updater(open, from, mid, to))
           case _ => (None, open)
       case _ => (None, open)
   
@@ -106,12 +108,12 @@ object GameEngine {
           case (0, -2) => Some((r1, c1 - 1))
           case _ => None
   
-  given openCoordsUpdater: ((List[Coord2D], Coord2D, Coord2D) => List[Coord2D]) =
-    (open, from, cap) =>
+  given openCoordsUpdater: ((List[Coord2D], Coord2D, Coord2D, Coord2D) => List[Coord2D]) =
+    (open, from, cap, to) =>
       @tailrec
       def clean(l: List[Coord2D], acc: List[Coord2D]): List[Coord2D] = l match
         case Nil => acc
-        case h :: t if h == from || h == cap => clean(t, acc)
+        case h :: t if h == from || h == cap || h == to => clean(t, acc)
         case h :: t => clean(t, h :: acc)
 
       from :: cap :: clean(open, Nil)

@@ -82,7 +82,6 @@ object TUI {
 
   @tailrec
   def humanTurnTUI(movedFrom: Option[Coord2D], startTime: Long): Unit =
-    val startTime = System.currentTimeMillis()
     showValidMoves()
     movedFrom match
       case Some(locked) =>
@@ -149,7 +148,7 @@ object TUI {
         GameState.onStateChanged()
       case None =>
         if GameState.currentPlayer == Stone.White then
-          humanTurnTUI(None, System.currentTimeMillis())
+          humanTurnTUI(None, GameState.turnStartTime)
         else
           GameLoop.doComputerMove()
         gameLoopTUI()

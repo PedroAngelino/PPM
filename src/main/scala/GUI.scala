@@ -35,12 +35,14 @@ object GUI {
     private var primaryStage: Stage = _
     private var gridPane: GridPane = _
     private var statusLabel: Label = _
+    private var timerLabel: Label = _
     private var endTurnBtn: Button = _
 
     // Estado local de selecao — unico estado proprio da GUI
     private var selectedCoord: Option[Coord2D] = None
     private var validDests: List[Coord2D] = Nil
     private var canEndTurn: Boolean = false
+    private var timeExpired: Boolean = false
 
     private val CELL = 70
 
@@ -50,6 +52,7 @@ object GUI {
       stage.setTitle("Konane - GUI")
       stage.setResizable(false)
       buildGameScreen()
+      startTimerThread()
       // Registar o callback: sempre que o Main muda o estado, a GUI re-desenha
       GameState.onStateChanged = () =>
         if GameState.cfgMode != 1 then Platform.runLater(() => refresh())
@@ -72,7 +75,10 @@ object GUI {
       titleLbl.setTextFill(Color.WHITE)
       statusLabel = new Label("A aguardar inicio...")
       statusLabel.setTextFill(Color.LIGHTGRAY)
-      topBar.getChildren.addAll(titleLbl, statusLabel)
+      timerLabel = new Label(s"Tempo: ${GameState.cfgTime / 1000}s")
+      timerLabel.setTextFill(Color.WHITE)
+      timerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13))
+      topBar.getChildren.addAll(titleLbl, statusLabel, timerLabel)
       root.setTop(topBar)
 
       // Tabuleiro
@@ -121,11 +127,39 @@ object GUI {
     // ===================================================
     private def refresh(): Unit =
       renderBoard()
+      timeExpired = false
+      updateTimerLabel()
       statusLabel.setText(
         if !GameState.gameActive then "Jogo terminado."
         else if GameState.currentPlayer == Stone.White then "O seu turno (GUI)"
         else "Turno das Pretas (PC)..."
       )
+
+    private def startTimerThread(): Unit =
+      val t = new Thread(() =>
+        while true do
+          Thread.sleep(500)
+          Platform.runLater(() => updateTimerLabel())
+      )
+      t.setDaemon(true)
+      t.start()
+
+    private def updateTimerLabel(): Unit =
+      if timerLabel == null then return
+      if !GameState.gameActive then
+        timerLabel.setText(s"Tempo: ${GameState.cfgTime / 1000}s")
+      else
+        val elapsed = (System.currentTimeMillis() - GameState.turnStartTime).toInt
+        val remaining = Math.max(0, (GameState.cfgTime - elapsed + 999) / 1000)
+        timerLabel.setText(s"Tempo: ${remaining}s")
+        if remaining == 0 && GameState.currentPlayer == Stone.White && !timeExpired then
+          timeExpired = true
+          selectedCoord = None
+          validDests = Nil
+          canEndTurn = false
+          endTurnBtn.setVisible(false)
+          statusLabel.setText("Tempo esgotado. Turno perdido.")
+          GUI.onSkipTurn()
 
     // ===================================================
     // DESENHAR O TABULEIRO (so lê GameState, nao altera nada)

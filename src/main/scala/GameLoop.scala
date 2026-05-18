@@ -17,9 +17,11 @@ object GameLoop {
     GameState.rand = MyRandom(this.hashCode().toLong)
     GameState.history = Nil
     GameState.gameActive = true
+    GameState.resetTurnTimer()
     GameState.onStateChanged()
 
   def finishWhiteTurn(): Unit =
+    GameState.resetTurnTimer()
     GameState.currentPlayer = Stone.Black
     GameState.onStateChanged()
     GameEngine.checkWinner(GameState.board, Stone.Black, GameState.open) match
@@ -35,6 +37,21 @@ object GameLoop {
 
   def doComputerMove(): Unit =
     Thread.sleep(600) // pequena pausa para a GUI mostrar o estado antes do PC jogar
+    val multiplecaptures: Boolean = GameState.cfgDiff == 2
+
+    def continueBlackCaptures(from: Coord2D): Unit =
+      val nextMoves = GameEngine.validDestinations(GameState.board, Stone.Black, from, GameState.open).flatMap { to =>
+        GameEngine.play(GameState.board, Stone.Black, from, to, GameState.open) match
+          case (Some(nb), newOpen) => Some((to, nb, newOpen))
+          case _ => None
+      }
+      if nextMoves.nonEmpty then
+        val (to, nb, newOpen) = nextMoves.head
+        GameState.board = nb;
+        GameState.open = newOpen
+        println(s"  PC continuou (${from._1},${from._2}) -> (${to._1},${to._2})")
+        continueBlackCaptures(to)
+
     if GameState.cfgDiff == 1 then
       val (newBoardOpt, newRand, newOpen, dest) =
         AIPlayer.playRandomly(GameState.board, GameState.rand, Stone.Black, GameState.open, AIPlayer.randomMove)
@@ -54,7 +71,9 @@ object GameLoop {
         GameState.board = nb;
         GameState.open = newOpen
         println(s"  PC jogou (${from._1},${from._2}) -> (${to._1},${to._2})")
+        if multiplecaptures then continueBlackCaptures(to)
 
+    GameState.resetTurnTimer()
     GameState.currentPlayer = Stone.White
     GameState.onStateChanged()
     GameEngine.checkWinner(GameState.board, Stone.White, GameState.open) match
@@ -74,6 +93,7 @@ object GameLoop {
         GameState.open = oldOpen
         GameState.currentPlayer = oldPlayer
         GameState.history = rest
+        GameState.resetTurnTimer()
         println("  Undo feito.")
         GameState.onStateChanged()
 
