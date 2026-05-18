@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="ppm5 [file:/C:/Users/pedro/IdeaProjects/PPM5/]" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
+  <component name="DisplayModuleName">
+    <option name="name" value="ProjetoKonane" />
+  </component>
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_23">
+    <output url="file://$MODULE_DIR$/../../target/scala-3.3.3/classes" />
+    <output-test url="file://$MODULE_DIR$/../../target/scala-3.3.3/test-classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../..">
+      <sourceFolder url="file://$MODULE_DIR$/../../src/main/scala" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/../../target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="sbt: scala-sdk-3.3.3" level="project" />
+    <orderEntry type="module-library">
+      <library name="sbt: unmanaged-sources-and-docs">
+        <CLASSES />
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/AppData/Local/Coursier/cache/v1/https/repo1.maven.org/maven2/org/openjfx/javafx-controls/21.0.2/javafx-controls-21.0.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="sbt: org.scala-lang:scala3-library_3:3.3.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-parallel-collections_3:1.0.4:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.openjfx:javafx-base:21.0.2:win:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.openjfx:javafx-controls:21.0.2:win:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.openjfx:javafx-graphics:21.0.2:win:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.13.12:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.openjfx:javafx-graphics:21.0.2:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.openjfx:javafx-base:21.0.2:jar" level="project" />
+  </component>
+</module>
