@@ -10,9 +10,9 @@ object GameState:
   var currentPlayer: Stone                            = Stone.White
   var rand: MyRandom                                  = MyRandom(this.hashCode().toLong)
   var history: List[(Board, List[Coord2D], Stone)]    = Nil
-  var gameActive: Boolean                             = false
-  var cfgRows: Int                                    = 6
-  var cfgCols: Int                                    = 6
+  @volatile var gameActive: Boolean                   = false
+  var cfgRows: Int                                    = 8
+  var cfgCols: Int                                    = 8
   var cfgTime: Int                                    = 10000
   var cfgDiff: Int                                    = 1
   var cfgMode: Int                                    = 3 // 1 = só TUI, 2 = só GUI, 3 = ambos
