@@ -15,6 +15,6 @@ object GameState:
   var cfgCols: Int                                    = 6
   var cfgTime: Int                                    = 10000
   var cfgDiff: Int                                    = 1
-
+  var cfgMode: Int                                    = 3 // 1 = só TUI, 2 = só GUI, 3 = ambos
   // Callback chamado sempre que o estado muda — a GUI usa isto para re-desenhar
   var onStateChanged: () => Unit = () => ()

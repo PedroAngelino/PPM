@@ -14,7 +14,7 @@ object GameLoop {
     GameState.board = GameEngine.setupBoard(full, GameState.cfgRows, GameState.cfgCols)
     GameState.open = full.keys.filterNot(GameState.board.contains).toList
     GameState.currentPlayer = Stone.White
-    GameState.rand = MyRandom(42L)
+    GameState.rand = MyRandom(this.hashCode().toLong)
     GameState.history = Nil
     GameState.gameActive = true
     GameState.onStateChanged()
@@ -83,7 +83,7 @@ object GameLoop {
     GUI.onHumanMove = (from, to) =>
       if !GameState.gameActive || GameState.currentPlayer != Stone.White then return
       // Guardar historico apenas no primeiro salto
-      if !GameState.history.headOption.exists(_._3 == Stone.White) then
+      if !GameState.history.headOption.exists { case (b,_,_ ) => b eq GameState.board} then
         GameState.history = (GameState.board, GameState.open, Stone.White) :: GameState.history
       GameEngine.play(GameState.board, Stone.White, from, to, GameState.open) match
         case (Some(nb), newOpen) =>

@@ -51,12 +51,14 @@ object GUI {
       stage.setResizable(false)
       buildGameScreen()
       // Registar o callback: sempre que o Main muda o estado, a GUI re-desenha
-      GameState.onStateChanged = () => Platform.runLater(() => refresh())
+      GameState.onStateChanged = () =>
+        if GameState.cfgMode != 1 then Platform.runLater(() => refresh())
 
     // ===================================================
     // CONSTRUCAO DO ECRA (feito uma vez)
     // ===================================================
     private def buildGameScreen(): Unit =
+      if GameState.cfgMode == 1 then return // modo só TUI, nao mostrar janela
       val root = new BorderPane()
       root.setStyle("-fx-background-color: white;")
 
