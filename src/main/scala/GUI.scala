@@ -57,9 +57,6 @@ object GUI {
         if GameState.cfgMode != 1 then Platform.runLater(() => refresh())
       GUI.instance = this
 
-    // ===================================================
-    // CONSTRUCAO DO ECRA (feito uma vez)
-    // ===================================================
     private def buildGameScreen(): Unit =
       if GameState.cfgMode == 1 then return // modo só TUI, nao mostrar janela
       val root = new BorderPane()
