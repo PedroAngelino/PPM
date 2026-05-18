@@ -22,7 +22,7 @@ object GUI {
   var onUndo: () => Unit = () => ()
   var onRestart: () => Unit = () => ()
 
-  // Referencia à instancia da app JavaFX, guardada quando start() é chamado
+  // aqui fica guardada a instancia da janela do JavaFX
   var instance: KonaneApp = _
 
   def launch(): Unit =
@@ -38,7 +38,7 @@ object GUI {
     private var timerLabel: Label = _
     private var endTurnBtn: Button = _
 
-    // Estado local de selecao — unico estado proprio da GUI
+    // variaveis que a GUI usa para saber o que esta selecionado
     private var selectedCoord: Option[Coord2D] = None
     private var validDests: List[Coord2D] = Nil
     private var canEndTurn: Boolean = false
@@ -52,17 +52,17 @@ object GUI {
       stage.setResizable(false)
       buildGameScreen()
       startTimerThread()
-      // Registar o callback: sempre que o Main muda o estado, a GUI re-desenha
+      // quando o estado muda no Main, a GUI atualiza outra vez
       GameState.onStateChanged = () =>
         if GameState.cfgMode != 1 then Platform.runLater(() => refresh())
       GUI.instance = this
 
     private def buildGameScreen(): Unit =
-      if GameState.cfgMode == 1 then return // modo só TUI, nao mostrar janela
+      if GameState.cfgMode == 1 then return // se for so TUI nao abre a janela
       val root = new BorderPane()
       root.setStyle("-fx-background-color: white;")
 
-      // Barra de topo
+      // parte de cima da janela
       val topBar = new HBox(20)
       topBar.setPadding(new Insets(10, 15, 10, 15))
       topBar.setStyle("-fx-background-color: black;")
@@ -78,7 +78,7 @@ object GUI {
       topBar.getChildren.addAll(titleLbl, statusLabel, timerLabel)
       root.setTop(topBar)
 
-      // Tabuleiro
+      // zona onde fica o tabuleiro
       gridPane = new GridPane()
       gridPane.setPadding(new Insets(20))
       gridPane.setHgap(2);
@@ -86,7 +86,7 @@ object GUI {
       gridPane.setAlignment(Pos.CENTER)
       root.setCenter(gridPane)
 
-      // Barra de botoes
+      // botoes de baixo
       endTurnBtn = btn("Terminar Turno")
       endTurnBtn.setVisible(false)
       endTurnBtn.setOnAction(_ => {
@@ -119,9 +119,7 @@ object GUI {
       primaryStage.setScene(new Scene(root, (cols * (CELL + 2) + 80).toDouble, (rows * (CELL + 2) + 130).toDouble))
       primaryStage.show()
 
-    // ===================================================
-    // REFRESH — chamado pelo Main via GameState.onStateChanged
-    // ===================================================
+    // atualiza o ecra quando alguma coisa muda no jogo
     private def refresh(): Unit =
       renderBoard()
       timeExpired = false
@@ -158,9 +156,7 @@ object GUI {
           statusLabel.setText("Tempo esgotado. Turno perdido.")
           GUI.onSkipTurn()
 
-    // ===================================================
-    // DESENHAR O TABULEIRO (so lê GameState, nao altera nada)
-    // ===================================================
+    // desenha o tabuleiro usando o estado atual do jogo
     private def renderBoard(): Unit =
       gridPane.getChildren.clear()
       val board = GameState.board
@@ -193,7 +189,7 @@ object GUI {
         if !board.contains(coord) && open.contains(coord) then
           pane.getChildren.add(new Circle(4, Color.web("#00aa00", 0.6)))
 
-        // Clicavel apenas se for turno das Brancas
+        // so da para clicar quando e o turno das brancas
         if GameState.gameActive && GameState.currentPlayer == Stone.White then
           val isWhite = board.get(coord).contains(Stone.White)
           val isDest = validDests.contains(coord)
@@ -204,14 +200,12 @@ object GUI {
 
         gridPane.add(pane, c, r)
 
-    // ===================================================
-    // CLIQUE — selecao local, depois delega ao Main
-    // ===================================================
+    // trata dos cliques no tabuleiro
     private def handleClick(coord: Coord2D): Unit =
       if !GameState.gameActive || GameState.currentPlayer != Stone.White then return
       selectedCoord match
         case None =>
-          // Selecionar peca: calcula destinos validos localmente para highlight
+          // escolhe a peca e mostra para onde ela pode ir
           val dests = GameEngine.validDestinations(GameState.board, Stone.White, coord, GameState.open)
           if GameState.board.get(coord).contains(Stone.White) && dests.nonEmpty then
             selectedCoord = Some(coord);
@@ -221,7 +215,7 @@ object GUI {
             statusLabel.setText("Peca sem movimentos validos.")
 
         case Some(from) if validDests.contains(coord) =>
-          // Executar salto: delega ao Main, que altera GameState e notifica de volta
+          // faz a jogada e depois o Main trata de atualizar o jogo
           val prevSelected = from
           selectedCoord = None;
           validDests = Nil
@@ -235,7 +229,7 @@ object GUI {
               validDests = dests;
               renderBoard()
 
-    // Chamado pelo Main apos um salto valido, para permitir multi-salto na GUI
+    // o Main chama isto depois de um salto para ver se ainda da para continuar
     def notifyJumpDone(to: Coord2D, moreDests: List[Coord2D]): Unit =
       Platform.runLater: () =>
         if moreDests.nonEmpty then
