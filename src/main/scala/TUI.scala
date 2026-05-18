@@ -15,11 +15,13 @@ object TUI {
       case Some(GameDomain.Stone.White) => "W"
       case None                 => "."
 
+  @tailrec
   def waitActiveGame(): Unit =
     if GameState.gameActive then
       Thread.sleep(500)
+      waitActiveGame()
 
-  waitActiveGame()
+  @tailrec
   private def waitForGUI(): Unit =
     if GUI.instance == null then
       Thread.sleep(100)
@@ -161,7 +163,7 @@ object TUI {
         if GameState.currentPlayer == Stone.White then
           humanTurnTUI(None, GameState.turnStartTime)
         else
-          GameLoop.doComputerMove()
+          AIPlayer.doComputerMove()
         gameLoopTUI()
 
   @tailrec
@@ -172,6 +174,7 @@ object TUI {
     println(s"1. Jogar")
     println(s"2. Nivel de dificuldade (Atual: Nivel ${GameState.cfgDiff})")
     println(s"3. Definir tempo por jogada (Atual: ${GameState.cfgTime / 1000}s)")
+    println(s"4. Definir tamanho do tabuleiro (Atual: ${GameState.cfgRows} x ${GameState.cfgCols})")
     println(s"0. Sair")
     println("=" * 30)
     print("Escolha uma opcao: ")
@@ -193,7 +196,6 @@ object TUI {
             // Modo so GUI: esperar que o jogo termine sem bloquear com a TUI
             println("A jogar na GUI. Aguarda o fim do jogo...")
             waitActiveGame()
-            println("Jogo terminado.")
           mainMenu()
       case "2" =>
         print("Nova dificuldade (1-Facil, 2-Dificil): ")
@@ -203,6 +205,14 @@ object TUI {
         print("Novo tempo limite (segundos): ")
         GameState.cfgTime = StdIn.readLine().toIntOption.getOrElse(GameState.cfgTime / 1000) * 1000
         mainMenu()
+
+      case "4" =>
+        print("Novo numero de linhas: ")
+        GameState.cfgRows = StdIn.readLine().toIntOption.getOrElse(GameState.cfgRows)
+        print("Novo numero de colunas: ")
+        GameState.cfgCols = StdIn.readLine().toIntOption.getOrElse(GameState.cfgCols)
+        mainMenu()
+
       case "0" =>
         println("Adeus!")
       case _ =>
