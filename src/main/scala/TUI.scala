@@ -168,6 +168,12 @@ object TUI {
       case "1" =>
           print("Modo de jogo (1-TUI, 2-GUI, 3-Ambos): ")
           GameState.cfgMode = StdIn.readLine().toIntOption.getOrElse(3)
+
+          if GameState.cfgMode == 2 || GameState.cfgMode == 3 then
+            if GUI.instance == null then GUI.launch()
+            while GUI.instance == null do Thread.sleep(100)
+            GameLoop.registerGuiCallbacks()
+
           GameLoop.startGame()
           if GameState.cfgMode == 1 || GameState.cfgMode == 3 then
             gameLoopTUI()

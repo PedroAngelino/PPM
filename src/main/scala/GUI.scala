@@ -47,7 +47,6 @@ object GUI {
     private val CELL = 70
 
     override def start(stage: Stage): Unit =
-      GUI.instance = this
       primaryStage = stage
       stage.setTitle("Konane - GUI")
       stage.setResizable(false)
@@ -56,6 +55,7 @@ object GUI {
       // Registar o callback: sempre que o Main muda o estado, a GUI re-desenha
       GameState.onStateChanged = () =>
         if GameState.cfgMode != 1 then Platform.runLater(() => refresh())
+      GUI.instance = this
 
     // ===================================================
     // CONSTRUCAO DO ECRA (feito uma vez)
