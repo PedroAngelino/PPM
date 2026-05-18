@@ -4,7 +4,6 @@ object GameDomain {
 
   type Coord2D = (Int, Int) // linha, coluna
   type Board = ParMap[Coord2D, Stone]
-
   enum Stone:
     case Black, White
 

@@ -6,7 +6,8 @@ import scala.annotation.tailrec
 object GameEngine {
 
   def initBoard(rows: Int, cols: Int): Board =
-    @tailrec
+
+    @tailrec // Função recursiva para iterar sobre as linhas e colunas
     def build(r: Int, c: Int, acc: Map[Coord2D, Stone]): Map[Coord2D, Stone] =
       (r, c) match
         case (row, _) if row >= rows => acc
@@ -17,10 +18,12 @@ object GameEngine {
 
     build(0, 0, Map.empty).par
 
+  // Função para configurar o tabuleiro removendo um par adjacente de pedras de cores opostas
   def setupBoard(board: Board, rows: Int, cols: Int): Board =
     val adjDirs = List((0, 1), (0, -1), (1, 0), (-1, 0))
     val centers = List((rows / 2, cols / 2), (rows / 2 - 1, cols / 2 - 1), (0, 0), (0, cols - 1), (rows - 1, 0), (rows - 1, cols - 1))
 
+    // Função para encontrar um par adjacente de pedras de cores opostas
     @tailrec
     def findAdj(c: Coord2D, dirs: List[Coord2D]): Option[(Coord2D, Coord2D)] =
       dirs match
@@ -32,6 +35,7 @@ object GameEngine {
             case (Some(Stone.White), Some(Stone.Black)) => Some((a, c))
             case _ => findAdj(c, t)
 
+    // Função para iterar sobre os centros e encontrar o primeiro par adjacente
     @tailrec
     def findPair(candidates: List[Coord2D]): Option[(Coord2D, Coord2D)] =
       candidates match
@@ -80,6 +84,8 @@ object GameEngine {
     }
   }
 
+  // Função para realizar uma jogada, verificando se é válida e atualizando o tabuleiro e as coordenadas abertas
+  //"using updater" serve para passar uma função como argumento
   def play(board: Board, player: Stone, from: Coord2D, to: Coord2D, open: List[Coord2D])
           (using updater: (List[Coord2D], Coord2D, Coord2D, Coord2D) => List[Coord2D]): (Option[Board], List[Coord2D]) =
 
@@ -97,7 +103,8 @@ object GameEngine {
             (Some(nb), updater(open, from, mid, to))
           case _ => (None, open)
       case _ => (None, open)
-  
+
+
   def capturedCoord(from: Coord2D, to: Coord2D): Option[Coord2D] =
     (from, to) match
       case ((r1, c1), (r2, c2)) =>
@@ -107,7 +114,9 @@ object GameEngine {
           case (0, 2) => Some((r1, c1 + 1))
           case (0, -2) => Some((r1, c1 - 1))
           case _ => None
-  
+
+  //"given" é usado para definir um valor ou função que será usado implicitamente em outras partes do código, sem precisar passá-lo explicitamente como argumento.
+  //  retorna uma nova lista de coordenadas abertas atualizada após a jogada.
   given openCoordsUpdater: ((List[Coord2D], Coord2D, Coord2D, Coord2D) => List[Coord2D]) =
     (open, from, cap, to) =>
       @tailrec

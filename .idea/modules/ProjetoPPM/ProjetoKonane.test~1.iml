@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="projetoppm:test [file:///C:/Users/pedro/OneDrive/Ambiente%20de%20Trabalho/ProjetoPPM/]" external.linked.project.path="C:\Users\pedro\OneDrive\Ambiente de Trabalho\ProjetoPPM" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="SBT" external.system.module.type="sbtSourceSet" type="JAVA_MODULE" version="4">
+  <component name="DisplayModuleName">
+    <option name="name" value="ProjetoKonane.test" />
+  </component>
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_26">
+    <output-test url="file://$MODULE_DIR$/../../../target/scala-3.3.3/test-classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../../src/test" />
+    <content url="file://$MODULE_DIR$/../../../target/scala-3.3.3/resource_managed/test" />
+    <content url="file://$MODULE_DIR$/../../../target/scala-3.3.3/src_managed/test" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="sbt: scala-sdk-3.3.3" level="project" />
+    <orderEntry type="module" module-name="ProjetoKonane.main~1" />
+    <orderEntry type="module-library">
+      <library name="sbt: unmanaged-sources-and-docs">
+        <CLASSES />
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/AppData/Local/Coursier/cache/v1/https/repo1.maven.org/maven2/org/openjfx/javafx-controls/21.0.2/javafx-controls-21.0.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="sbt: org.scala-lang:scala3-library_3:3.3.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-parallel-collections_3:1.0.4:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.openjfx:javafx-base:21.0.2:win:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.openjfx:javafx-controls:21.0.2:win:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.openjfx:javafx-graphics:21.0.2:win:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.13.12:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.openjfx:javafx-graphics:21.0.2:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.openjfx:javafx-base:21.0.2:jar" level="project" />
+  </component>
+  <component name="TestModuleProperties" production-module="ProjetoKonane.main" />
+</module>

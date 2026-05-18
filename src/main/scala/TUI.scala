@@ -9,6 +9,7 @@ import scala.io.StdIn
 
 
 object TUI {
+
   private def cell(board: Board, coord: Coord2D): String = //pegar a stone numa celula de uma certa coordenadas
     GameDomain.getStone(board)(coord) match
       case Some(GameDomain.Stone.Black) => "B"
@@ -73,7 +74,7 @@ object TUI {
 
     s"$head\n$body" //o header ficar em cima e o corpo em baixo
 
-
+  //função para ler as coordenadas do input do utilizador, e transformar numa tupla de inteiros
   def parseCoord(s: String): Option[Coord2D] =
     s.trim.split("\\s+") match
       case Array(r, c) =>
@@ -81,6 +82,7 @@ object TUI {
         catch case _: NumberFormatException => None
       case _ => None
 
+  //Mostra movimentos validos para o jogador atual
   def showValidMoves(): Unit =
     val moves = GameState.board.toList
       .collect { case (c, s) if s == GameState.currentPlayer =>
@@ -93,6 +95,7 @@ object TUI {
       println(s"    De (${from._1},${from._2})  ->  ${dests.map(d => s"(${d._1},${d._2})").mkString("  ")}")
     }
 
+  // Função recursiva para o turno do jogador humano, que mostra os movimentos validos, lê o input, e processa o movimento.
   @tailrec
   def humanTurnTUI(movedFrom: Option[Coord2D], startTime: Long): Unit =
     showValidMoves()
@@ -104,7 +107,7 @@ object TUI {
         if GameUtils.isTimeOver(startTime, GameState.cfgTime) then
           println("[!] Tempo esgotado! Turno perdido.")
           GameLoop.finishWhiteTurn()
-        else if line.isEmpty then
+        else if line.isEmpty then     //Se o jogador tiver mais movimentos validos após mover, continua a pedir input, caso contrário termina o turno.
           GameLoop.finishWhiteTurn()
         else
           parseCoord(line) match
@@ -150,6 +153,7 @@ object TUI {
             case _ =>
               println("  Mau input."); humanTurnTUI(None, startTime)
 
+  // Função recursiva para o loop do jogo, que mostra o tabuleiro, verifica o vencedor, e alterna entre o turno do jogador humano e da AI.
   @tailrec
   def gameLoopTUI(): Unit =
     if !GameState.gameActive then return
