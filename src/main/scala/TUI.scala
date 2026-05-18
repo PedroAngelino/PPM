@@ -81,7 +81,7 @@ object TUI {
     }
 
   @tailrec
-  def humanTurnTUI(movedFrom: Option[Coord2D]): Unit =
+  def humanTurnTUI(movedFrom: Option[Coord2D], startTime: Long): Unit =
     val startTime = System.currentTimeMillis()
     showValidMoves()
     movedFrom match
@@ -102,12 +102,12 @@ object TUI {
                   GameState.board = nb;
                   GameState.open = newOpen
                   GameState.onStateChanged()
-                  if GameEngine.validDestinations(nb, Stone.White, to, newOpen).nonEmpty then humanTurnTUI(Some(to))
+                  if GameEngine.validDestinations(nb, Stone.White, to, newOpen).nonEmpty then humanTurnTUI(Some(to), startTime)
                   else  GameLoop.finishWhiteTurn()
                 case _ =>
-                  println("  Move invalido."); humanTurnTUI(movedFrom)
+                  println("  Move invalido."); humanTurnTUI(movedFrom, startTime)
             case None =>
-              println("  Mau input."); humanTurnTUI(movedFrom)
+              println("  Mau input."); humanTurnTUI(movedFrom, startTime)
 
       case None =>
         println(s"\n  Turno de ${GameState.currentPlayer}. Introduz: fromRow fromCol toRow toCol ou 'undo'")
@@ -117,7 +117,7 @@ object TUI {
           GameLoop.finishWhiteTurn()
         else if line == "undo" then
           GameLoop.doUndo();
-          humanTurnTUI(None)
+          humanTurnTUI(None, startTime)
         else
           line.split("\\s+") match
             case Array(r1, c1, r2, c2) =>
@@ -129,14 +129,14 @@ object TUI {
                       GameState.board = nb;
                       GameState.open = newOpen
                       GameState.onStateChanged()
-                      if GameEngine.validDestinations(nb, Stone.White, to, newOpen).nonEmpty then humanTurnTUI(Some(to))
+                      if GameEngine.validDestinations(nb, Stone.White, to, newOpen).nonEmpty then humanTurnTUI(Some(to), startTime)
                       else  GameLoop.finishWhiteTurn()
                     case _ =>
-                      println("  Move invalido."); humanTurnTUI(None)
+                      println("  Move invalido."); humanTurnTUI(None, startTime)
                 case _ =>
-                  println("  Mau input."); humanTurnTUI(None)
+                  println("  Mau input."); humanTurnTUI(None, startTime)
             case _ =>
-              println("  Mau input."); humanTurnTUI(None)
+              println("  Mau input."); humanTurnTUI(None, startTime)
 
   @tailrec
   def gameLoopTUI(): Unit =
@@ -149,7 +149,7 @@ object TUI {
         GameState.onStateChanged()
       case None =>
         if GameState.currentPlayer == Stone.White then
-          humanTurnTUI(None)
+          humanTurnTUI(None, System.currentTimeMillis())
         else
           GameLoop.doComputerMove()
         gameLoopTUI()
@@ -167,9 +167,17 @@ object TUI {
     print("Escolha uma opcao: ")
     StdIn.readLine().trim match
       case "1" =>
-        GameLoop.startGame()
-        gameLoopTUI()
-        mainMenu()
+          print("Modo de jogo (1-TUI, 2-GUI, 3-Ambos): ")
+          GameState.cfgMode = StdIn.readLine().toIntOption.getOrElse(3)
+          GameLoop.startGame()
+          if GameState.cfgMode == 1 || GameState.cfgMode == 3 then
+            gameLoopTUI()
+          else
+            // Modo so GUI: esperar que o jogo termine sem bloquear com a TUI
+            println("A jogar na GUI. Aguarda o fim do jogo...")
+            while GameState.gameActive do Thread.sleep(500)
+            println("Jogo terminado.")
+          mainMenu()
       case "2" =>
         print("Nova dificuldade (1-Facil, 2-Dificil): ")
         GameState.cfgDiff = StdIn.readLine().toIntOption.getOrElse(GameState.cfgDiff)
