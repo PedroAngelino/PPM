@@ -15,6 +15,17 @@ object TUI {
       case Some(GameDomain.Stone.White) => "W"
       case None                 => "."
 
+  def waitActiveGame(): Unit =
+    if GameState.gameActive then
+      Thread.sleep(500)
+
+  waitActiveGame()
+  private def waitForGUI(): Unit =
+    if GUI.instance == null then
+      Thread.sleep(100)
+      waitForGUI()
+
+
   private def renderRow( //vai chamar o metodo cell para ler uma row
                          row: Int,
                          col: Int,
@@ -171,7 +182,8 @@ object TUI {
 
           if GameState.cfgMode == 2 || GameState.cfgMode == 3 then
             if GUI.instance == null then GUI.launch()
-            while GUI.instance == null do Thread.sleep(100)
+
+            waitForGUI()
             GameLoop.registerGuiCallbacks()
 
           GameLoop.startGame()
@@ -180,7 +192,7 @@ object TUI {
           else
             // Modo so GUI: esperar que o jogo termine sem bloquear com a TUI
             println("A jogar na GUI. Aguarda o fim do jogo...")
-            while GameState.gameActive do Thread.sleep(500)
+            waitActiveGame()
             println("Jogo terminado.")
           mainMenu()
       case "2" =>
